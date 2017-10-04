@@ -11,24 +11,46 @@ $(document).ready(function() {
     })
 });
 var map;
-var locations = []
+var locationsMajor = [];
+var locationsMed = [];
+var locationsMinor = [];
 function initMap() {
     var city = { lat: 0, lng: 0};
     var map = new google.maps.Map(document.getElementById('map'), {
         center:city,
         zoom: 1
     });
-    var icon = {
-    url: "images/earthquake.png", // url
-    scaledSize: new google.maps.Size(20, 20), // scaled size // anchor
-};
-
-
-    var markers = locations.map(function(object, i) {
+    var iconMajor = {
+        url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png", // url
+        scaledSize: new google.maps.Size(20, 20), // scaled size // anchor
+    };
+    var iconMed = {
+        url: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png", // url
+        scaledSize: new google.maps.Size(20, 20), // scaled size // anchor
+    };
+    var iconMinor = {
+        url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png", // url
+        scaledSize: new google.maps.Size(20, 20), // scaled size // anchor
+    };
+    var markersMajor = locationsMajor.map(function(location, i) {
         return new google.maps.Marker({
-            position: object,
-            icon: icon,
-            map: map
+            position: location,
+            map: map,
+            icon: iconMajor
+        });
+    });
+    var markersMed = locationsMed.map(function(location, i) {
+        return new google.maps.Marker({
+            position: location,
+            map: map,
+            icon: iconMed
+        });
+    });
+    var markersMinor = locationsMinor.map(function(location, i) {
+        return new google.maps.Marker({
+            position: location,
+            map: map,
+            icon: iconMinor
         });
     });
 }
@@ -46,11 +68,17 @@ function onGeoSuccess(json){
         }else{
             timeSinceEqString = `${hourAmount} hours ago`;
         }
-        let listItem = `<li>${earthQuake.properties.title} (${timeSinceEqString})</li>`;
+        let listItem = `<li>${earthQuake.properties.title.split(" of ")[1]} (${timeSinceEqString})</li>`;
         $earthQakeList.append(listItem);
         // console.log(earthQuake.geometry.coordinates[0]);
         // markMap();
-        locations.push({lat:earthQuake.geometry.coordinates[0], lng:earthQuake.geometry.coordinates[1]})
+        if(earthQuake.properties.mag >= 5){
+            locationsMajor.push({lat:earthQuake.geometry.coordinates[1], lng:earthQuake.geometry.coordinates[0]})
+        }else if(earthQuake.properties.mag >= 4.8 && earthQuake.properties.mag < 5){
+            locationsMed.push({lat:earthQuake.geometry.coordinates[1], lng:earthQuake.geometry.coordinates[0]})
+        }else{
+            locationsMinor.push({lat:earthQuake.geometry.coordinates[1], lng:earthQuake.geometry.coordinates[0]})
+        }
     })
     initMap();
 }
