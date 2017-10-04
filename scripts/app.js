@@ -1,67 +1,52 @@
 // define globals
 var weekly_quakes_endpoint = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson";
-
 $(document).ready(function() {
-  console.log("Let's get coding!");
-
-  // CODE IN HERE!
-  $.ajax({
-    method: 'GET',
-    url: weekly_quakes_endpoint,
-    dataType: 'json',
-    success: onSuccess,
-    error: onError,
-  })
-
-  initMap()
-
+    console.log("Let's get coding!");
+    // CODE IN HERE!
+    $.ajax({
+        method: 'GET',
+        url: weekly_quakes_endpoint,
+        success: onGeoSuccess,
+        error: onGeoError
+    })
 });
-
 var map;
-function initMap(lat,long) {
-     var city = {lat: lat, lng: };
-     map = new google.maps.Map(document.getElementById('map'), {
-       zoom: 1,
-       center: city
-     });
-     var marker = new google.maps.Marker({
-       position: city,
-       map: map
-     });
-   }
-
-
-
-function mapSuccess(json){
-  $("#map").on("load")
+var locations = []
+function initMap() {
+    var city = { lat: 37.78, lng: -122.44};
+    var map = new google.maps.Map(document.getElementById('map'), {
+        center:city,
+        zoom: 1
+    });
+    var markers = locations.map(function(object, i) {
+        return new google.maps.Marker({
+            position: object,
+            map: map
+        });
+    });
 }
-
-function onSuccess(data){
-  var currentTime = new Date();
-  currentTime = currentTime.getTime();
-
-  data.features.forEach(function(x){
-    var hoursFromEarthQuake = Math.round((((currentTime - x.properties.time)/1000)/60)/60);
-    var hourOrDay;
-    if(hoursFromEarthQuake===24){
-      var days = Math.floor(hoursFromEarthQuake/24);
-      var leftHours = hoursFromEarthQuake %24
-      hourOrDay=`${days} day and ${leftHours} hours ago`
-    }else if(hoursFromEarthQuake>24){
-      var days = Math.floor(hoursFromEarthQuake/24);
-      var leftHours = hoursFromEarthQuake %24
-      hourOrDay=`${days} days and ${leftHours} hours ago`
-    }else {
-      hourOrDay=`${hoursFromEarthQuake} hours`
-    }
-    var coordinates = x.geometry.coordinates[0] +"," + x.geometry.coordinates[1]
-    $("ul").append($(`<li>${x.properties.title} / ${hourOrDay} </li>`))
-  })
+function onGeoSuccess(json){
+    $('#info h1').append(json.metadata.count);
+    let date  = new Date();
+    let $earthQakeList = $('ul#earthquake-list');
+    json.features.forEach(function(earthQuake){
+        let hourAmount = Math.floor((((date.getTime() - earthQuake.properties.time)/1000)/60)/60);
+        let timeSinceEqString;
+        if(hourAmount >= 24){
+            let days = Math.floor(hourAmount/24);
+            let hours = hourAmount % 24;
+            timeSinceEqString = `${days} days and ${hours} hours ago`;
+        }else{
+            timeSinceEqString = `${hourAmount} hours ago`;
+        }
+        let listItem = `<li>${earthQuake.properties.title} (${timeSinceEqString})</li>`;
+        $earthQakeList.append(listItem);
+        // console.log(earthQuake.geometry.coordinates[0]);
+        // markMap();
+        locations.push({lat:earthQuake.geometry.coordinates[0], lng:earthQuake.geometry.coordinates[1]})
+    })
+    initMap();
 }
-
-function onError(x,y,z){
-  alert("We have run into an Error, please be patience while we fix the matter");
-  console.log("Error " + y);
-  console.log("Error " + z);
-  console.dir(x);
+function onGeoError(){
+    console.log("sad day");
 }
