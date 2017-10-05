@@ -1,5 +1,10 @@
 // define globals
 var weekly_quakes_endpoint = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_week.geojson";
+var map;
+var locationsMajor = [];
+var locationsMed = [];
+var locationsMinor = [];
+
 $(document).ready(function() {
     console.log("Let's get coding!");
     // CODE IN HERE!
@@ -9,11 +14,32 @@ $(document).ready(function() {
         success: onGeoSuccess,
         error: onGeoError
     })
+
+    $("#map").after('<button class="last30day">Last 30 Days</button>')
+    $("#map").after('<button class="last7day">Last 7 Days</button>')
+    $(".last30day").on('click',function(event){
+      event.preventDefault();
+      $.ajax({
+          method: 'GET',
+          url: "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson",
+          success: onGeoSuccess,
+          error: onGeoError
+      })
+      $("h1").text("Earthquakes from the past month:")
+    })
+    $(".last7day").on('click',function(event){
+      event.preventDefault();
+      $.ajax({
+          method: 'GET',
+          url: weekly_quakes_endpoint,
+          success: onGeoSuccess,
+          error: onGeoError
+      })
+      $("h1").text("Earthquakes from the past week:")
+    })
+
+
 });
-var map;
-var locationsMajor = [];
-var locationsMed = [];
-var locationsMinor = [];
 function initMap() {
     var city = { lat: 0, lng: 0};
     var map = new google.maps.Map(document.getElementById('map'), {
@@ -55,6 +81,10 @@ function initMap() {
     });
 }
 function onGeoSuccess(json){
+    $('li').remove();
+    locationsMajor=[];
+    locationsMinor=[];
+    locationsMed=[];
     $('#info h1').append(json.metadata.count);
     let date  = new Date();
     let $earthQakeList = $('ul#earthquake-list');
